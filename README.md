@@ -28,4 +28,63 @@ Communication between the Judge and Players is performed using a **pipe**, while
 5. The player generates a move and sends the row and column through the pipe.
 6. The Judge reads the move, validates it, and updates the board.
 7. The Judge checks for a win or draw after every valid move.
-8. When
+8. When the game ends, the Judge terminates the player processes and uses `waitpid()` to clean them up.
+
+## Features
+
+- Two-player Tic-Tac-Toe
+- Process-based player architecture
+- Inter-process communication using pipes
+- Signal-based player synchronization
+- Invalid move handling
+- Win and draw detection
+- Proper child-process cleanup
+
+## Process / Execution Tree
+
+The overall process structure looks like this:
+
+```text
+                         ┌─────────────────┐
+                         │   Judge Process │
+                         │    (judge.c)    │
+                         └────────┬────────┘
+                                  │
+                         fork()   │   fork()
+                    ┌─────────────┴─────────────┐
+                    │                           │
+                    ▼                           ▼
+          ┌─────────────────┐         ┌─────────────────┐
+          │   Player 1      │         │   Player 2      │
+          │   (child)       │         │   (child)       │
+          └────────┬────────┘         └────────┬────────┘
+                   │                           │
+                 exec()                      exec()
+                   │                           │
+                   ▼                           ▼
+          ┌─────────────────┐         ┌─────────────────┐
+          │   player.c      │         │   player.c      │
+          │  Player O       │         │  Player X       │
+          └────────┬────────┘         └────────┬────────┘
+                   │                           │
+                   │       Pipe (IPC)          │
+                   └────────────┬──────────────┘
+                                │
+                                ▼
+                         ┌──────────────┐
+                         │     Judge    │
+                         │ Reads Moves  │
+                         └──────────────┘
+
+## Files
+
+- `judge.c` – Controls the game and coordinates the players
+- `player.c` – Handles player moves and communicates with the Judge
+
+## Compilation
+
+```bash
+gcc judge.c -o judge
+gcc player.c -o player
+
+
